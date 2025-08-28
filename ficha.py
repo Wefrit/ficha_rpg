@@ -2,7 +2,6 @@ import sqlite3
 
 DB_FILE = "players.db"
 
-# Inicializa banco
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -32,31 +31,29 @@ class Player:
         self.max_hp = max_hp if max_hp is not None else hp
         self.max_mana = max_mana if max_mana is not None else mana
 
-    # Ações
     def take_damage(self, amount=1):
         self.hp = max(self.hp - amount, 0)
 
     def heal(self, amount=1):
-        self.hp += amount
+        self.hp = min(self.hp + amount, self.max_hp)
 
     def mana_use(self, amount=1):
         self.mana = max(self.mana - amount, 0)
 
     def mana_recover(self, amount=1):
-        self.mana += amount
+        self.mana = min(self.mana + amount, self.max_mana)
 
-    # Level up
     def lvl_up(self):
         while self.xp >= (self.lvl + 1) * 100:
             self.xp -= (self.lvl + 1) * 100
             self.lvl += 1
+            # Não aumenta HP ou Mana automaticamente
 
     def gain_xp(self, amount):
         self.xp += amount
         self.lvl_up()
         self.save()
 
-    # Salvar no banco
     def save(self):
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
@@ -68,7 +65,6 @@ class Player:
         conn.commit()
         conn.close()
 
-    # Carregar do banco
     @classmethod
     def load(cls, name):
         conn = sqlite3.connect(DB_FILE)

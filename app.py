@@ -15,7 +15,7 @@ def index():
             return redirect(url_for("dashboard"))
     return render_template("login.html")
 
-# Dashboard do jogador
+# Dashboard
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     global player
@@ -45,6 +45,13 @@ def dashboard():
         return redirect(url_for("dashboard"))
 
     return render_template("dashboard.html", player=player)
+
+# Logout
+@app.route("/logout", methods=["POST"])
+def logout():
+    global player
+    player = None
+    return redirect(url_for("index"))
 
 # Logout
 @app.route("/logout", methods=["POST"])
