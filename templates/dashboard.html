@@ -10,7 +10,7 @@
     <p>Nível: {{ player.lvl }}</p>
     <p>XP: {{ player.xp }}</p>
 
-    <form method="post">
+    <form method="post" action="/dashboard">
         <input type="number" name="amount" value="1" min="1">
         <button name="action" value="damage">Tomar dano</button>
         <button name="action" value="heal">Cura</button>

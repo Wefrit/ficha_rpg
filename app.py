@@ -4,7 +4,7 @@ from ficha import Player
 app = Flask(__name__)
 player = None
 
-# Página de login
+# Página inicial: login
 @app.route("/", methods=["GET", "POST"])
 def index():
     global player
@@ -13,12 +13,15 @@ def index():
         if name:
             player = Player.load(name)
             return redirect(url_for("dashboard"))
-    return render_template("index.html", player=player)
+    return render_template("index.html", player=None)
 
-# Dashboard do jogador
+# Dashboard
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     global player
+    if not player:
+        return redirect(url_for("index"))
+
     if request.method == "POST":
         action = request.form.get("action")
         if action == "damage":
@@ -30,11 +33,15 @@ def dashboard():
         elif action == "recover_mana":
             player.mana_recover()
         elif action == "gain_xp":
-            amount = int(request.form.get("xp_amount", 0))
-            player.gain_xp(amount)
-        player.save()  # salva no SQLite
-    return render_template("index.html", player=player)
+            xp_amount = request.form.get("xp_amount", 0)
+            try:
+                player.gain_xp(int(xp_amount))
+            except ValueError:
+                pass
+        player.save()
+        return redirect(url_for("dashboard"))
 
+    return render_template("index.html", player=player)
 
 # Ações do jogador
 @app.route("/damage", methods=["POST"])
