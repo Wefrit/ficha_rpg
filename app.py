@@ -4,6 +4,7 @@ from ficha import Player
 app = Flask(__name__)
 player = None
 
+# Página de login
 @app.route("/", methods=["GET", "POST"])
 def index():
     global player
@@ -11,10 +12,11 @@ def index():
         name = request.form.get("name")
         if name:
             player = Player.load(name)
-            player.save()  # salva jogador novo no banco
+            player.save()  # Salva jogador novo no banco
             return redirect(url_for("dashboard"))
     return render_template("login.html")
 
+# Dashboard
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     global player
@@ -45,49 +47,60 @@ def dashboard():
 
     return render_template("dashboard.html", player=player)
 
+# Logout
 @app.route("/logout", methods=["POST"])
 def logout():
     global player
     player = None
     return redirect(url_for("index"))
 
-
-# Ações do jogador
+# ------------------------
+# Ações do jogador (POST)
+# ------------------------
 @app.route("/damage", methods=["POST"])
 def damage():
-    player.take_damage(1)
-    player.save()
-    return redirect(url_for("index"))
+    global player
+    if player:
+        player.take_damage(1)
+        player.save()
+    return redirect(url_for("dashboard"))
 
 @app.route("/heal", methods=["POST"])
 def heal():
-    player.heal(1)
-    player.save()
-    return redirect(url_for("index"))
+    global player
+    if player:
+        player.heal(1)
+        player.save()
+    return redirect(url_for("dashboard"))
 
 @app.route("/use_mana", methods=["POST"])
 def use_mana():
-    player.mana_use(1)
-    player.save()
-    return redirect(url_for("index"))
+    global player
+    if player:
+        player.mana_use(1)
+        player.save()
+    return redirect(url_for("dashboard"))
 
 @app.route("/recover_mana", methods=["POST"])
 def recover_mana():
-    player.mana_recover(1)
-    player.save()
-    return redirect(url_for("index"))
+    global player
+    if player:
+        player.mana_recover(1)
+        player.save()
+    return redirect(url_for("dashboard"))
 
 @app.route("/gain_xp", methods=["POST"])
 def gain_xp():
-    amount = request.form.get("xp_amount")
-    if amount:
+    global player
+    if player:
+        amount = request.form.get("xp_amount")
         try:
             amount = int(amount)
             player.gain_xp(amount)
             player.save()
-        except ValueError:
+        except (ValueError, TypeError):
             pass
-    return redirect(url_for("index"))
+    return redirect(url_for("dashboard"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
