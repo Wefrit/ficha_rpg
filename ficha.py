@@ -1,5 +1,28 @@
-import json
+import sqlite3
 import os
+
+DB_FILE = "players.db"
+
+# Cria a tabela se não existir
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS players (
+            name TEXT PRIMARY KEY,
+            hp INTEGER,
+            mana INTEGER,
+            lvl INTEGER,
+            xp INTEGER,
+            max_hp INTEGER,
+            max_mana INTEGER
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
 
 class Player:
     def __init__(self, name, hp=10, mana=5, lvl=1, xp=0, max_hp=None, max_mana=None):
@@ -11,6 +34,7 @@ class Player:
         self.max_hp = max_hp if max_hp is not None else hp
         self.max_mana = max_mana if max_mana is not None else mana
 
+    # Métodos de ação
     def take_damage(self, amount=1):
         self.hp = max(self.hp - amount, 0)
 
@@ -24,33 +48,41 @@ class Player:
         self.mana += amount
 
     def lvl_up(self):
-        """
-        Sobe de nível consumindo o XP necessário.
-        Aqui você pode chamar sua lógica de ajustar HP/Mana máximos.
-        """
         while self.xp >= (self.lvl + 1) * 100:
             xp_needed = (self.lvl + 1) * 100
             self.xp -= xp_needed
             self.lvl += 1
-            # HP e Mana máximos podem ser ajustados no Flask na interface
+            # Aqui você pode permitir ajustar HP/Mana manualmente se quiser
+            # self.hp = input("Digite novo HP: ")
+            # self.mana = input("Digite nova Mana: ")
 
+    # Ganhar XP
     def gain_xp(self, amount):
         self.xp += amount
         self.lvl_up()
+        self.save()
 
+    # Salvar no banco
     def save(self):
-        if not os.path.exists("players"):
-            os.makedirs("players")
-        path = os.path.join("players", f"{self.name}.json")
-        with open(path, "w") as f:
-            json.dump(self.__dict__, f)
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute('''
+            INSERT OR REPLACE INTO players
+            (name, hp, mana, lvl, xp, max_hp, max_mana)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (self.name, self.hp, self.mana, self.lvl, self.xp, self.max_hp, self.max_mana))
+        conn.commit()
+        conn.close()
 
+    # Carregar do banco
     @classmethod
     def load(cls, name):
-        path = os.path.join("players", f"{name}.json")
-        if os.path.exists(path):
-            with open(path, "r") as f:
-                data = json.load(f)
-            return cls(**data)
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute('SELECT * FROM players WHERE name = ?', (name,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            return cls(*row)
         else:
             return cls(name=name)
