@@ -4,7 +4,6 @@ from ficha import Player
 app = Flask(__name__)
 player = None
 
-# Página de login
 @app.route("/", methods=["GET", "POST"])
 def index():
     global player
@@ -12,10 +11,10 @@ def index():
         name = request.form.get("name")
         if name:
             player = Player.load(name)
+            player.save()  # salva jogador novo no banco
             return redirect(url_for("dashboard"))
     return render_template("login.html")
 
-# Dashboard
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     global player
@@ -46,14 +45,6 @@ def dashboard():
 
     return render_template("dashboard.html", player=player)
 
-# Logout
-@app.route("/logout", methods=["POST"])
-def logout():
-    global player
-    player = None
-    return redirect(url_for("index"))
-
-# Logout
 @app.route("/logout", methods=["POST"])
 def logout():
     global player

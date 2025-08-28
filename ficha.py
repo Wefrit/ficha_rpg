@@ -47,7 +47,6 @@ class Player:
         while self.xp >= (self.lvl + 1) * 100:
             self.xp -= (self.lvl + 1) * 100
             self.lvl += 1
-            # Não aumenta HP ou Mana automaticamente
 
     def gain_xp(self, amount):
         self.xp += amount
