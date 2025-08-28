@@ -19,32 +19,22 @@ def index():
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     global player
-    if not player:
-        return redirect(url_for("index"))
-
     if request.method == "POST":
         action = request.form.get("action")
-        amount = request.form.get("amount", 1)
-        try:
-            amount = int(amount)
-        except ValueError:
-            amount = 1
-
         if action == "damage":
-            player.take_damage(amount)
+            player.take_damage()
         elif action == "heal":
-            player.heal(amount)
+            player.heal()
         elif action == "use_mana":
-            player.mana_use(amount)
+            player.mana_use()
         elif action == "recover_mana":
-            player.mana_recover(amount)
+            player.mana_recover()
         elif action == "gain_xp":
+            amount = int(request.form.get("xp_amount", 0))
             player.gain_xp(amount)
+        player.save()  # salva no SQLite
+    return render_template("index.html", player=player)
 
-        player.save()
-        return redirect(url_for("dashboard"))
-
-    return render_template("dashboard.html", player=player)
 
 # Ações do jogador
 @app.route("/damage", methods=["POST"])
