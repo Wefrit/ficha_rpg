@@ -2,11 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for
 from ficha import Player
 
 app = Flask(__name__)
-
-# Variável global para o jogador atual (pode ser adaptada para múltiplos jogadores)
 player = None
 
-# Página inicial: pede nome ou carrega jogador
 @app.route("/", methods=["GET", "POST"])
 def index():
     global player
@@ -15,13 +12,27 @@ def index():
         if name:
             player = Player.load(name)
             return redirect(url_for("dashboard"))
-    return '''
-        <h1>Os Castanhos de Ziralia</h1>
-        <form method="post">
-            Nome do personagem: <input type="text" name="name">
-            <input type="submit" value="Entrar">
-        </form>
-    '''
+    return render_template("index.html")
+
+@app.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
+    global player
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "damage":
+            player.take_damage()
+        elif action == "heal":
+            player.heal()
+        elif action == "use_mana":
+            player.mana_use()
+        elif action == "recover_mana":
+            player.mana_recover()
+        elif action == "gain_xp":
+            # Aqui você pode pedir valor via form ou deixar fixo
+            player.gain_xp(50)
+        player.save()
+    return render_template("dashboard.html", player=player)
+
 
 # Dashboard do jogador
 @app.route("/dashboard")
