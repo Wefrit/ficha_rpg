@@ -4,39 +4,55 @@ from ficha import Player
 app = Flask(__name__)
 player = None
 
-# Página inicial: login ou ficha do jogador
+# Página de login
 @app.route("/", methods=["GET", "POST"])
 def index():
     global player
     if request.method == "POST":
-        # Se estiver logando
-        if "name" in request.form:
-            name = request.form.get("name")
-            if name:
-                player = Player.load(name)
-                return redirect(url_for("index"))
+        name = request.form.get("name")
+        if name:
+            player = Player.load(name)
+            return redirect(url_for("dashboard"))
+    return render_template("login.html")
 
-        # Se estiver fazendo uma ação
+# Dashboard do jogador
+@app.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
+    global player
+    if not player:
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
         action = request.form.get("action")
-        if player and action:
-            if action == "damage":
-                player.take_damage()
-            elif action == "heal":
-                player.heal()
-            elif action == "use_mana":
-                player.mana_use()
-            elif action == "recover_mana":
-                player.mana_recover()
-            elif action == "gain_xp":
-                xp_amount = request.form.get("xp_amount", 0)
-                try:
-                    player.gain_xp(int(xp_amount))
-                except ValueError:
-                    pass
-            player.save()
-            return redirect(url_for("index"))
+        xp_amount = request.form.get("xp_amount", 0)
+        try:
+            xp_amount = int(xp_amount)
+        except ValueError:
+            xp_amount = 0
 
-    return render_template("index.html", player=player)
+        if action == "damage":
+            player.take_damage()
+        elif action == "heal":
+            player.heal()
+        elif action == "use_mana":
+            player.mana_use()
+        elif action == "recover_mana":
+            player.mana_recover()
+        elif action == "gain_xp":
+            player.gain_xp(xp_amount)
+
+        player.save()
+        return redirect(url_for("dashboard"))
+
+    return render_template("dashboard.html", player=player)
+
+# Logout
+@app.route("/logout", methods=["POST"])
+def logout():
+    global player
+    player = None
+    return redirect(url_for("index"))
+
 
 # Ações do jogador
 @app.route("/damage", methods=["POST"])
